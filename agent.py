@@ -285,7 +285,7 @@ def post_inline_comment(merge_request_iid: int, mr_data: Dict[str, Any], comment
     elif comment_data.severity == "high" and not comment_body.startswith("❗"):
         comment_body = f"❗ {comment_body}"
     
-    comment_body = f"{NAME_PREFIX} [{comment_data.category}] {comment_body}"
+    comment_body = f"{NAME_PREFIX} [{comment_data.category.upper()}] {comment_body}"
 
     # Prepare position data
     if comment_data.start_line == comment_data.end_line:
@@ -397,8 +397,9 @@ def main():
         print("Example: python agent.py feature/new-feature")
         sys.exit(1)
     
-    print("🍩 Homer Simpson AI Code Review Agent")
-    print("=" * 50)
+    print("🍩" * 50)
+    print("Homer - AI Code Review Agent")
+    print("🍩" * 50)
     
     # Fetch MR and diff
     mr_data = fetch_merge_request(merge_request_iid, branch_name)
