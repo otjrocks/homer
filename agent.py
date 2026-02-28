@@ -285,7 +285,7 @@ def post_inline_comment(merge_request_iid: int, mr_data: Dict[str, Any], comment
     elif comment_data.severity == "high" and not comment_body.startswith("❗"):
         comment_body = f"❗ {comment_body}"
     
-    comment_body = f"{NAME_PREFIX} {comment_body}"
+    comment_body = f"{NAME_PREFIX} [{comment_data.category}] {comment_body}"
 
     # Prepare position data
     if comment_data.start_line == comment_data.end_line:
