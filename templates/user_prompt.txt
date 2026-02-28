@@ -5,7 +5,7 @@ Your task is to identify potential bugs, inconsistencies, security vulnerabiliti
 Return JSON in this EXACT format:
 
 {
-  "summary": "High-level summary of all your suggestions and feedback.",
+  "summary": "A 2–4 sentence executive summary for the MR author. Briefly describe what the diff changes, the most critical issues found (grouped by theme where possible), and the overall recommendation. Do not enumerate every comment — synthesize. Keep it under 100 words.",
   "overall_assessment": "approve | request_changes | comment",
   "comments": [
     {
