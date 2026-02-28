@@ -252,14 +252,15 @@ def get_mr_details(merge_request_iid: int) -> Dict[str, Any]:
     
     return response.json()
 
-def post_inline_comment(merge_request_iid: int, mr_data: Dict[str, Any], comment_data: CodeComment, mr_details: Dict[str, Any]) -> bool:
+def post_inline_comment(
+    merge_request_iid: int, 
+    mr_data: Dict[str, Any], 
+    comment_data: CodeComment, 
+    mr_details: Dict[str, Any]
+) -> bool:
     """
     Post an inline comment to GitLab MR.
-
-    Prefix comments based on severity:
-    - Low: "ℹ️"
-    - Medium: "⚠️"
-    - High: "❗"
+    Handles cases where start_line or end_line may be undefined (None).
     """
     headers = {"PRIVATE-TOKEN": GITLAB_TOKEN}
 
@@ -287,39 +288,40 @@ def post_inline_comment(merge_request_iid: int, mr_data: Dict[str, Any], comment
     comment_body = f"Homer: {comment_body} (Severity: {comment_data.severity.upper()}, Category: {comment_data.category.upper()}, _AI-generated comment_)"
 
     # Prepare position data
-    if comment_data.start_line == comment_data.end_line:
-        # Single-line comment
-        position = {
-            "position_type": "text",
-            "base_sha": change.get("base_sha") or mr_details.get("diff_refs", {}).get("base_sha"),
-            "start_sha": change.get("start_sha") or mr_details.get("diff_refs", {}).get("start_sha"),
-            "head_sha": change.get("head_sha") or mr_details.get("diff_refs", {}).get("head_sha"),
-            "new_path": comment_data.file_path,
-            "new_line": comment_data.start_line
-        }
-    else:
-        # Multi-line comment
-        position = {
-            "position_type": "text",
-            "base_sha": change.get("base_sha") or mr_details.get("diff_refs", {}).get("base_sha"),
-            "start_sha": change.get("start_sha") or mr_details.get("diff_refs", {}).get("start_sha"),
-            "head_sha": change.get("head_sha") or mr_details.get("diff_refs", {}).get("head_sha"),
-            "new_path": comment_data.file_path,
-            "new_line": comment_data.end_line,
-            "start_new_line": comment_data.start_line
-        }
+    base_sha = change.get("base_sha") or mr_details.get("diff_refs", {}).get("base_sha")
+    start_sha = change.get("start_sha") or mr_details.get("diff_refs", {}).get("start_sha")
+    head_sha = change.get("head_sha") or mr_details.get("diff_refs", {}).get("head_sha")
+    
+    position = {
+        "position_type": "text",
+        "base_sha": base_sha,
+        "start_sha": start_sha,
+        "head_sha": head_sha,
+        "new_path": comment_data.file_path
+    }
+
+    # Handle line numbers
+    if comment_data.start_line and comment_data.end_line:
+        if comment_data.start_line == comment_data.end_line:
+            position["new_line"] = comment_data.start_line
+        else:
+            position["new_line"] = comment_data.end_line
+            position["start_new_line"] = comment_data.start_line
+    elif comment_data.start_line:
+        position["new_line"] = comment_data.start_line
+    elif comment_data.end_line:
+        position["new_line"] = comment_data.end_line
+    # else: no line info, post general file comment
 
     # Post discussion
     url = f"{GITLAB_URL}/api/v4/projects/{GITLAB_PROJECT_ID}/merge_requests/{merge_request_iid}/discussions"
-    payload = {
-        "body": comment_body,
-        "position": position
-    }
+    payload = {"body": comment_body, "position": position if position.get("new_line") else None}
 
     try:
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
-        print(f"✓ Posted comment on {comment_data.file_path}:{comment_data.start_line}")
+        line_info = position.get("new_line", "general")
+        print(f"✓ Posted comment on {comment_data.file_path}:{line_info}")
         return True
     except requests.exceptions.RequestException as e:
         print(f"Error posting comment: {e}")
