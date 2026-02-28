@@ -20,13 +20,12 @@ load_dotenv()
 
 # Configuration
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-3-opus-20240229")
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL")
 GITLAB_TOKEN = os.getenv("GITLAB_TOKEN")
 GITLAB_PROJECT_ID = os.getenv("GITLAB_PROJECT_ID")
 GITLAB_URL = os.getenv("GITLAB_URL", "https://gitlab.com")
 BASE_BRANCH = os.getenv("BASE_BRANCH", "main")
-
-HOMER_IMAGE_URL = "https://github.com/otjrocks/homer/blob/main/assets/homer.jpg?raw=true"
+HOMER_IMAGE_URL = os.getenv("HOMER_IMAGE_URL")
 
 
 @dataclass
