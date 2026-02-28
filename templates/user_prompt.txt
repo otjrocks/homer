@@ -38,7 +38,7 @@ Analysis Steps:
     * Testing: Are there sufficient tests covering the changes?
 3. Formulate clear, concise, and actionable feedback for each identified issue.
 4. Prioritize critical issues first.
-5. Summarize your findings in the summary field.
+5. Summarize your findings in the summary field. The summary should **only** reference direct parts of your inline comments and should not mention any information about yourself.
 6. Double-check that all start_line and end_line values correspond exactly to lines of code your comment is referencing, and do not include blank, unrelated, or context lines.
 
 Diff to review: (diff)
