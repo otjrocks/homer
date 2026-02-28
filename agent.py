@@ -267,9 +267,20 @@ def post_inline_comment(merge_request_iid, mr_data, comment_data, mr_details):
         print(f"Error: File {comment_data.file_path} not found in MR changes")
         return False
 
-    # Prefix comment based on severity
-    prefix = {"low": "ℹ️", "medium": "⚠️", "high": "❗"}.get(comment_data.severity, "")
-    comment_body = f"Homer: {prefix} {comment_data.comment} (Severity: {comment_data.severity.upper()}, Category: {comment_data.category.upper()}, _AI-generated comment_)"
+    # Map severity to emoji
+    prefix = {
+        "low": "ℹ️",
+        "medium": "⚠️",
+        "high": "❗"
+    }.get(comment_data.severity.lower(), "")
+
+    # Format comment with markdown for readability
+    comment_body = (
+        f"Homer: {prefix} {comment_data.comment}\n\n"
+        f"> **Severity:** {comment_data.severity.upper()}\n"
+        f"> **Category:** {comment_data.category.upper()}\n"
+        f"> _AI-generated comment_"
+    )
 
     # Build initial position (line-level comment)
     position = {

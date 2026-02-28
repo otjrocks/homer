@@ -43,6 +43,6 @@ Analysis Steps:
 Diff to review:
 {diff_text}
 
-Take a deep breath, read the instructions again, and execute each step carefully. Output only valid JSON, no markdown or extra text.
+Read the instructions again, and execute each step carefully. Output only valid JSON, no markdown or extra text.
 
 Review:
