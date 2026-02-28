@@ -1,0 +1,11 @@
+<img src="{homer_image_url}" width="{image_width}" alt="Homer">
+
+**Overall Assessment:** {overall_assessment}
+
+**Summary:**
+{summary}
+
+**Issue Breakdown:**
+- ❗ High: {high_count}
+- ⚠️ Medium: {medium_count}
+- D'oh! Low: {low_count}

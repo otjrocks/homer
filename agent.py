@@ -25,7 +25,9 @@ GITLAB_TOKEN = os.getenv("GITLAB_TOKEN")
 GITLAB_PROJECT_ID = os.getenv("GITLAB_PROJECT_ID")
 GITLAB_URL = os.getenv("GITLAB_URL", "https://gitlab.com")
 BASE_BRANCH = os.getenv("BASE_BRANCH", "main")
+
 NAME_PREFIX = "[Homer (AI)]"
+HOMER_IMAGE_URL = "https://github.com/otjrocks/homer/blob/main/assets/homer.jpg?raw=true"
 
 
 @dataclass
@@ -117,49 +119,6 @@ def build_diff_text(mr_data: Dict[str, Any]) -> str:
         diff_lines.append(change.get("diff", ""))
     
     return "\n".join(diff_lines)
-
-
-def create_system_prompt() -> str:
-    """Create the system prompt for Homer persona"""
-    return """You are Homer Simpson, an AI code reviewer. You are friendly and casual in your reviews.
-
-Your job is to review GitLab merge request diffs and provide constructive feedback. For low-severity or trivial issues, use "D'oh!" to add some humor while still being helpful. For medium and high-severity issues, keep a more serious and helpful tone.
-
-You MUST output STRICT JSON only, no markdown, no explanations, no additional text. Only valid JSON output."""
-
-
-def create_user_prompt(diff_text: str) -> str:
-    """Create the user prompt with diff"""
-    return f"""Analyze the following GitLab merge request diff and provide code review feedback.
-
-Return JSON in this EXACT format:
-{{
-  "summary": "High-level summary of the changes and overall quality",
-  "overall_assessment": "approve | request_changes | comment",
-  "comments": [
-    {{
-      "file_path": "relative/path/to/file",
-      "start_line": 42,
-      "end_line": 42,
-      "severity": "low | medium | high",
-      "category": "bug | performance | security | readability | architecture | style",
-      "comment": "Specific actionable feedback. For low-severity issues, prefix with 'D'oh!'"
-    }}
-  ]
-}}
-
-IMPORTANT RULES:
-- Single-line issue: start_line = end_line
-- Multi-line issue: start_line = first line, end_line = last line
-- Only reference added/modified lines, never deleted lines
-- File paths must match GitLab diff exactly
-- Empty comments array if no issues: "comments": []
-- Always prefix trivial/low-severity issues with "D'oh!"
-- Output ONLY valid JSON, nothing else
-
-Diff to review:
-{diff_text}"""
-
 
 def validate_review_json(raw_response: str) -> Optional[Dict[str, Any]]:
     """
@@ -267,8 +226,6 @@ def call_claude_for_review(system_prompt: str, user_prompt: str, retry_count: in
         return None
     
     raw_output = response.content[0].text
-
-    print(f"Raw response from Claude:\n{raw_output}\n")
     
     # Validate JSON
     validated = validate_review_json(raw_output)
@@ -327,6 +284,8 @@ def post_inline_comment(merge_request_iid: int, mr_data: Dict[str, Any], comment
         comment_body = f"⚠️ {comment_body}"
     elif comment_data.severity == "high" and not comment_body.startswith("➡️"):
         comment_body = f"❗ {comment_body}"
+    
+    comment_body = f"{NAME_PREFIX} {comment_body}"
 
     # Prepare position data
     if comment_data.start_line == comment_data.end_line:
@@ -382,19 +341,16 @@ def post_summary_note(merge_request_iid: int, review_data: Dict[str, Any]) -> bo
             severity_counts[severity] += 1
 
     # Include Homer image (resized) and format summary
-    summary_text = f"""<img src="/assets/homer.jpg" width="150" alt="Homer">
-
-{NAME_PREFIX}
-
-**Overall Assessment:** {review_data["overall_assessment"].replace("_", " ").title()}
-
-**Summary:**
-{review_data["summary"]}
-
-**Issue Breakdown:**
-- ➡️ High: {severity_counts["high"]}
-- ⚠️ Medium: {severity_counts["medium"]}
-- D'oh! Low: {severity_counts["low"]}"""
+    summary_text = load_template(
+        "summary_note.txt",
+        homer_image_url=HOMER_IMAGE_URL,
+        image_width=150,
+        overall_assessment=review_data["overall_assessment"].replace("_", " ").title(),
+        summary=review_data["summary"],
+        high_count=severity_counts["high"],
+        medium_count=severity_counts["medium"],
+        low_count=severity_counts["low"]
+    )
 
     # Post note
     url = f"{GITLAB_URL}/api/v4/projects/{GITLAB_PROJECT_ID}/merge_requests/{merge_request_iid}/notes"
@@ -403,12 +359,19 @@ def post_summary_note(merge_request_iid: int, review_data: Dict[str, Any]) -> bo
     try:
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
-        print(f"✓ Posted summary note with Homer image")
+        print(f"✓ Posted summary note with overall assessment: {review_data['overall_assessment']}")
         return True
     except requests.exceptions.RequestException as e:
         print(f"Error posting summary note: {e}")
         return False
 
+def load_template(file_name: str, **kwargs) -> str:
+    template_path = os.path.join(os.path.dirname(__file__), "templates", file_name)
+    with open(template_path, "r", encoding="utf-8") as f:
+        template = f.read()
+    for k, v in kwargs.items():
+        template = template.replace(f"{{{k}}}", str(v))
+    return template
 
 def main():
     """Main entry point"""
@@ -446,8 +409,8 @@ def main():
     mr_details = get_mr_details(mr_id)
     
     # Create prompts
-    system_prompt = create_system_prompt()
-    user_prompt = create_user_prompt(diff_text)
+    system_prompt = load_template("system_prompt.txt")
+    user_prompt = load_template("user_prompt.txt", diff_text=diff_text)
     
     # Call Claude
     review_result = call_claude_for_review(system_prompt, user_prompt)

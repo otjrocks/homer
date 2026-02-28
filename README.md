@@ -1,4 +1,4 @@
-# Homer Simpson GitLab AI Code Review Agent 🍩
+# GitLab AI Code Review Agent
 
 An automated code review agent for GitLab that uses Claude AI with a Homer Simpson persona to provide friendly, constructive feedback on merge requests.
 
@@ -201,5 +201,4 @@ The agent reads from `.env` file:
 - Check `GITLAB_PROJECT_ID` is correct
 
 ## License
-
 MIT
