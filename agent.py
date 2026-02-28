@@ -1,6 +1,6 @@
 """
-Homer Simpson GitLab AI Code Review Agent
-Using the Anthropic API, this agent reviews GitLab merge request diffs and provides feedbac. It posts inline comments for issues and a final summary note to the MR.
+GitLab AI Code Review Agent
+Using the Anthropic API, this agent reviews GitLab merge request diffs and provides feedback. It posts inline comments for issues and a final summary note to the MR.
 """
 
 import json
@@ -277,8 +277,8 @@ def post_inline_comment(merge_request_iid, mr_data, comment_data, mr_details):
     # Format comment with markdown for readability
     comment_body = (
         f"Homer: {prefix} {comment_data.comment}\n\n"
-        f"> **Severity:** {comment_data.severity.upper()}\n"
-        f"> **Category:** {comment_data.category.upper()}\n"
+        f"> **Severity:** {comment_data.severity.upper()}\n\n"
+        f"> **Category:** {comment_data.category.upper()}\n\n"
         f"> _AI-generated comment_"
     )
 
