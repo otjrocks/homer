@@ -315,7 +315,12 @@ def post_inline_comment(
 
     # Post discussion
     url = f"{GITLAB_URL}/api/v4/projects/{GITLAB_PROJECT_ID}/merge_requests/{merge_request_iid}/discussions"
-    payload = {"body": comment_body, "position": position if position.get("new_line") else None}
+    # Prepare payload
+    payload = {"body": comment_body}
+
+    # Only include position if there’s a line reference
+    if "new_line" in position:
+        payload["position"] = position
 
     try:
         response = requests.post(url, headers=headers, json=payload)
