@@ -8,4 +8,4 @@
 **Issue Breakdown:**
 - ❗ High: {high_count}
 - ⚠️ Medium: {medium_count}
-- D'oh! Low: {low_count}
+- ℹ️ Low: {low_count}
