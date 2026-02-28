@@ -1,11 +1,10 @@
-Analyze the following GitLab merge request diff and provide a detailed, constructive code review.
-Your task is to identify potential bugs, inconsistencies, security vulnerabilities, performance concerns, and areas for improvement in code style and readability. Prioritize security, correctness, and style in your feedback.
+Analyze the following GitLab merge request diff and provide a detailed, constructive code review. Your task is to identify potential bugs, inconsistencies, security vulnerabilities, performance concerns, and areas for improvement in code style and readability. Prioritize security, correctness, and maintainability.
 
-⚠️ Critical emphasis: When specifying lines for comments, you must only highlight the lines that contain the actual code your comment is referencing. Do not include unrelated lines, blank lines, or context lines. Single-line issues must have start_line = end_line. Multi-line issues must cover exactly the affected lines containing code—nothing more, nothing less.
-Return JSON in this EXACT format:
+⚠️ Critical emphasis: Only comment on lines that contain the actual code your comment references. Do not include blank lines, context lines, or unrelated lines. Single-line issues must have start_line = end_line. Multi-line issues must cover exactly the affected lines of code—nothing more, nothing less.
+Return JSON in this exact format:
 
 {
-  "summary": "A 2–4 sentence executive summary for the MR author. Briefly describe what the diff changes, the most critical issues found (grouped by theme where possible), and the overall recommendation. Do not enumerate every comment — synthesize. Keep it under 100 words.",
+  "summary": "A 2–4 sentence executive summary for the MR author. Briefly describe what the diff changes, the most critical issues found (grouped by theme if possible), and the overall recommendation. Keep under 100 words.",
   "overall_assessment": "approve | request_changes | comment",
   "comments": [
     {
@@ -19,31 +18,31 @@ Return JSON in this EXACT format:
   ]
 }
 
-Rules and Guidelines:
-* Exact line coverage only – highlight exactly the line(s) containing code that your comment refers to. No extra lines, no blank lines, no unrelated lines.
-* Single-line issue: start_line = end_line
-* Multi-line issue: start_line = first affected line of actual code, end_line = last affected line of actual code
-* Only reference added or modified lines, never deleted lines
-* File paths must match GitLab diff exactly
-* Leave comments array empty if no issues: "comments": []
-* Output ONLY valid JSON. No markdown, no explanations, no extra text
-Analysis Steps:
-1. Carefully read the provided diff_text and understand the changes it introduces.
-2. Evaluate the diff for potential issues:
-    * Functionality / Correctness: Are there bugs or unexpected behavior?
-    * Security: Are there vulnerabilities or risky patterns?
-    * Style / Readability: Is the code maintainable and adherent to style guidelines?
-    * Consistency: Does it align with existing code patterns?
-    * Performance / Efficiency: Are there potential bottlenecks?
-    * Testing: Are there sufficient tests covering the changes?
-3. Formulate clear, concise, and actionable feedback for each identified issue.
-4. Prioritize critical issues first.
-5. Summarize your findings in the summary field. The summary should **only** reference direct parts of your inline comments and should not mention any information about yourself.
-6. Double-check that all start_line and end_line values correspond exactly to lines of code your comment is referencing, and do not include blank, unrelated, or context lines.
+Rules & Guidelines:
+* Comment only on added or modified lines, never deleted lines.
+* start_line and end_line must match exactly the lines of code your comment refers to.
+* Single-line issue: start_line = end_line.
+* Multi-line issue: start_line = first affected line, end_line = last affected line.
+* Leave "comments": [] if no issues are found.
+* File paths must exactly match the GitLab diff.
 
-Diff to review: (diff)
+Analysis Steps:
+1. Read the provided diff_text carefully and understand the changes.
+2. Evaluate for:
+    * Functionality / Correctness
+    * Security
+    * Performance / Efficiency
+    * Style / Readability
+    * Consistency with existing patterns
+    * Testing coverage
+3. Prioritize critical issues first.
+4. Provide concise, actionable feedback for each identified issue.
+5. Summarize your findings in "summary", referencing only the inline comments.
+6. Double-check that all start_line and end_line values correspond exactly to actual code lines in the diff.
+
+Diff to review:
 {diff_text}
 
-Take a deep breath, read the instructions again, and execute each step carefully.
+Take a deep breath, read the instructions again, and execute each step carefully. Output only valid JSON, no markdown or extra text.
 
 Review:
