@@ -1,10 +1,9 @@
 # GitLab AI Code Review Agent
 
-An automated code review agent for GitLab that uses Claude AI with a Homer Simpson persona to provide friendly, constructive feedback on merge requests.
+An automated code review agent for GitLab that uses Claude AI to provide friendly, constructive feedback on merge requests.
 
 ## Features
 
-✨ **Homer Persona**: Friendly, casual reviews with "D'oh!" for trivial issues  
 📝 **Structured Reviews**: JSON-formatted feedback with severity and category classifications  
 💬 **Inline Comments**: Posts specific feedback on affected lines  
 📊 **Summary Notes**: Generates issue breakdown by severity level  
@@ -83,35 +82,13 @@ python agent.py feature/new-feature
 
 The agent will:
 1. Fetch the merge request and diff
-2. Send to Claude for review (Homer persona)
+2. Send to Claude for review
 3. Validate the JSON response
 4. Post inline comments on affected lines
 5. Post a summary note with issue breakdown
 3. Validate the JSON response
 4. Post inline comments on affected lines
 5. Post a summary note with issue breakdown
-
-## Output Example
-
-The agent posts comments like:
-- **Low severity**: "D'oh! This variable could be named more clearly."
-- **Medium severity**: "Consider using a const instead of let for immutable values."
-- **High severity**: "This SQL query is vulnerable to injection attacks. Use parameterized queries instead."
-
-And a summary note:
-```
-Homer AI Code Review Summary 🍩
-
-Overall Assessment: Comment
-
-Summary:
-Code looks solid overall with a few minor improvements suggested...
-
-Issue Breakdown:
-- High: 1
-- Medium: 2
-- Low: 3
-```
 
 ## JSON Response Format
 
@@ -141,7 +118,7 @@ GitLab MR Trigger
         ↓
 Fetch MR + Diff (GitLab API)
         ↓
-Claude Review (Homer Persona)
+Claude Review
         ↓
 Validate JSON
         ↓
@@ -157,7 +134,6 @@ Post Summary Note
 ✅ Line numbers are integers and `start_line ≤ end_line`  
 ✅ File paths match the MR diff  
 ✅ Only references added/modified lines  
-✅ Low-severity comments prefixed with "D'oh!"  
 
 ## Error Handling
 
