@@ -26,7 +26,6 @@ GITLAB_PROJECT_ID = os.getenv("GITLAB_PROJECT_ID")
 GITLAB_URL = os.getenv("GITLAB_URL", "https://gitlab.com")
 BASE_BRANCH = os.getenv("BASE_BRANCH", "main")
 
-NAME_PREFIX = "Homer _(AI-generated)_:"
 HOMER_IMAGE_URL = "https://github.com/otjrocks/homer/blob/main/assets/homer.jpg?raw=true"
 
 
@@ -285,7 +284,7 @@ def post_inline_comment(merge_request_iid: int, mr_data: Dict[str, Any], comment
     elif comment_data.severity == "high" and not comment_body.startswith("❗"):
         comment_body = f"❗ {comment_body}"
     
-    comment_body = f"{NAME_PREFIX} [{comment_data.category.upper()}] {comment_body}"
+    comment_body = f"Homer: {comment_body} (Severity: {comment_data.severity.upper()}, Category: {comment_data.category.upper()}, _AI-generated comment_)"
 
     # Prepare position data
     if comment_data.start_line == comment_data.end_line:
@@ -396,10 +395,11 @@ def main():
         print("Example: python agent.py 42")
         print("Example: python agent.py feature/new-feature")
         sys.exit(1)
-    
-    print("🍩" * 50)
+
+    print("\n" * 3)
     print("Homer - AI Code Review Agent")
     print("🍩" * 50)
+    print("\n")
     
     # Fetch MR and diff
     mr_data = fetch_merge_request(merge_request_iid, branch_name)
