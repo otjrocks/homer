@@ -26,7 +26,7 @@ GITLAB_PROJECT_ID = os.getenv("GITLAB_PROJECT_ID")
 GITLAB_URL = os.getenv("GITLAB_URL", "https://gitlab.com")
 BASE_BRANCH = os.getenv("BASE_BRANCH", "main")
 
-NAME_PREFIX = "[Homer (AI)]"
+NAME_PREFIX = "Homer _(AI-generated)_:"
 HOMER_IMAGE_URL = "https://github.com/otjrocks/homer/blob/main/assets/homer.jpg?raw=true"
 
 
@@ -168,7 +168,7 @@ def validate_review_json(raw_response: str) -> Optional[Dict[str, Any]]:
                 print(f"Error: Invalid severity: {comment['severity']}")
                 return None
             
-            valid_categories = ["bug", "performance", "security", "readability", "architecture", "style"]
+            valid_categories = ["bug", "performance", "security", "readability", "architecture", "style", "other"]
             if comment["category"] not in valid_categories:
                 print(f"Error: Invalid category: {comment['category']}")
                 return None
@@ -258,7 +258,7 @@ def post_inline_comment(merge_request_iid: int, mr_data: Dict[str, Any], comment
     Post an inline comment to GitLab MR.
 
     Prefix comments based on severity:
-    - Low: "D'oh!"
+    - Low: "ℹ️"
     - Medium: "⚠️"
     - High: "❗"
     """
@@ -278,11 +278,11 @@ def post_inline_comment(merge_request_iid: int, mr_data: Dict[str, Any], comment
 
     # Prefix based on severity
     comment_body = comment_data.comment
-    if comment_data.severity == "low" and not comment_body.startswith("D'oh!"):
-        comment_body = f"D'oh! {comment_body}"
+    if comment_data.severity == "low" and not comment_body.startswith("ℹ️"):
+        comment_body = f"ℹ️ {comment_body}"
     elif comment_data.severity == "medium" and not comment_body.startswith("⚠️"):
         comment_body = f"⚠️ {comment_body}"
-    elif comment_data.severity == "high" and not comment_body.startswith("➡️"):
+    elif comment_data.severity == "high" and not comment_body.startswith("❗"):
         comment_body = f"❗ {comment_body}"
     
     comment_body = f"{NAME_PREFIX} {comment_body}"
