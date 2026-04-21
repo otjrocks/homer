@@ -71,9 +71,6 @@ The agent will:
 3. Validate the JSON response
 4. Post inline comments on affected lines
 5. Post a summary note with issue breakdown
-3. Validate the JSON response
-4. Post inline comments on affected lines
-5. Post a summary note with issue breakdown
 
 ## JSON Response Format
 
