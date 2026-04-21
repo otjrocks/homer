@@ -1,13 +1,13 @@
 # GitLab AI Code Review Agent
 
-An automated code review agent for GitLab that uses Claude AI to provide friendly, constructive feedback on merge requests.
+An automated code review agent for GitLab that uses Codex to provide friendly, constructive feedback on merge requests.
 
 ## Features
 
 📝 **Structured Reviews**: JSON-formatted feedback with severity and category classifications  
 💬 **Inline Comments**: Posts specific feedback on affected lines  
 📊 **Summary Notes**: Generates issue breakdown by severity level  
-🔄 **Smart Retry**: Automatically retries if Claude returns invalid JSON  
+🔄 **Smart Retry**: Automatically retries if Codex returns invalid JSON  
 ✅ **Validation**: Comprehensive validation of line numbers and file paths  
 
 ## Setup
@@ -15,7 +15,7 @@ An automated code review agent for GitLab that uses Claude AI to provide friendl
 ### 1. Prerequisites
 - Python 3.8+
 - GitLab account with API access
-- Anthropic API key (Claude access)
+- Codex API key and API URL
 
 ### 2. Installation
 
@@ -40,22 +40,7 @@ cp .env.example .env
 
 ### 3. Configure .env
 
-Edit `.env` with your credentials:
-
-```env
-ANTHROPIC_API_KEY=sk-ant-...
-ANTHROPIC_MODEL=claude-3-opus-20240229
-GITLAB_TOKEN=glpat-...
-GITLAB_PROJECT_ID=12345678
-GITLAB_URL=https://gitlab.com
-BASE_BRANCH=main
-```
-
-**Getting credentials:**
-- **ANTHROPIC_API_KEY**: Get from [Anthropic Console](https://console.anthropic.com)
-- **GITLAB_TOKEN**: Create in GitLab Settings → Access Tokens (need `api` scope)
-- **GITLAB_PROJECT_ID**: Found in GitLab project Settings → General
-- **GITLAB_URL**: Use `https://gitlab.com` for GitLab.com or your self-hosted URL
+Edit `.env` with your credentials. See `.env.example`
 
 ## Usage
 
@@ -82,7 +67,7 @@ python agent.py feature/new-feature
 
 The agent will:
 1. Fetch the merge request and diff
-2. Send to Claude for review
+2. Send to Codex for review
 3. Validate the JSON response
 4. Post inline comments on affected lines
 5. Post a summary note with issue breakdown
@@ -92,7 +77,7 @@ The agent will:
 
 ## JSON Response Format
 
-Claude returns structured feedback:
+Codex returns structured feedback:
 
 ```json
 {
@@ -118,7 +103,7 @@ GitLab MR Trigger
         ↓
 Fetch MR + Diff (GitLab API)
         ↓
-Claude Review
+LLM Review
         ↓
 Validate JSON
         ↓
@@ -143,13 +128,6 @@ Post Summary Note
 - **Invalid JSON**: Automatically retries with correction prompt
 - **API errors**: Logs error and continues with next comment
 
-## Configuration
-
-The agent reads from `.env` file:
-- `ANTHROPIC_MODEL`: Claude model version (default: claude-3-opus-20240229)
-- `GITLAB_URL`: GitLab instance URL (default: https://gitlab.com)
-- `BASE_BRANCH`: Base branch for comparison (default: main)
-
 ## Troubleshooting
 
 **Virtual environment issues**
@@ -167,9 +145,9 @@ The agent reads from `.env` file:
 - Make sure virtual environment is activated before running the agent
 
 **"Invalid JSON" error after retry**
-- Check Claude API quota/limits
+- Check LLM API quota/limits
 - Try with a smaller diff manually
-- Verify `ANTHROPIC_API_KEY` is correct
+- Verify all `.env` variables are set correctly.
 
 **"Unauthorized" from GitLab**
 - Verify `GITLAB_TOKEN` is valid
