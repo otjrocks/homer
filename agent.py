@@ -18,12 +18,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
-CODEX_API_URL = os.getenv("CODEX_API_URL", "http://localhost:8000/v1")
+CODEX_API_URL = os.getenv("CODEX_API_URL")
 CODEX_API_KEY = os.getenv("CODEX_API_KEY")
-CODEX_MODEL = os.getenv("CODEX_MODEL", "codex-review")
+CODEX_MODEL = os.getenv("CODEX_MODEL")
 GITLAB_TOKEN = os.getenv("GITLAB_TOKEN")
 GITLAB_PROJECT_ID = os.getenv("GITLAB_PROJECT_ID")
-GITLAB_URL = os.getenv("GITLAB_URL", "https://gitlab.com")
+GITLAB_URL = os.getenv("GITLAB_URL")
 BASE_BRANCH = os.getenv("BASE_BRANCH", "main")
 
 
@@ -335,13 +335,12 @@ def post_inline_comment(merge_request_iid, mr_data, comment_data, mr_details):
         "new_path": comment_data.file_path
     }
 
-    if comment_data.start_line and comment_data.end_line:
+    if comment_data.start_line is not None and comment_data.end_line is not None:
         if comment_data.start_line != comment_data.end_line:
             position["start_new_line"] = comment_data.start_line
         position["new_line"] = comment_data.end_line
-    elif comment_data.start_line or comment_data.end_line:
-        position["new_line"] = comment_data.start_line or comment_data.end_line
-    # else: no line info, will fallback to general comment
+    elif comment_data.start_line is not None or comment_data.end_line is not None:
+        position["new_line"] = comment_data.start_line if comment_data.start_line is not None else comment_data.end_line
 
     url = f"{GITLAB_URL}/api/v4/projects/{GITLAB_PROJECT_ID}/merge_requests/{merge_request_iid}/discussions"
 
