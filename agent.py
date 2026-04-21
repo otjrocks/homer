@@ -482,7 +482,7 @@ def main():
     print("\nPosting summary note...")
     post_summary_note(mr_id, review_result)
     
-    print("\n" + "=" * 50)
+    print("\n" + "🍩" * 50)
     print("✓ Code review complete!")
 
 
