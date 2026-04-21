@@ -32,13 +32,9 @@ source venv/bin/activate
 echo "Installing dependencies..."
 pip install -r requirements.txt > /dev/null
 
-# Optional: show installed versions for debugging
-echo "\nChecking httpx and anthropic versions..."
-python -c "import httpx, anthropic; print('httpx', getattr(httpx,'__version__','not-installed')); print('anthropic', getattr(anthropic,'__version__','not-installed'))" || true
-
-# Upgrade httpx and anthropic to compatible versions (helpful if older deps present)
-echo "\nUpgrading httpx and anthropic to latest compatible versions..."
-pip install --upgrade httpx anthropic > /dev/null || true
+# Check dependencies installed
+echo "\nChecking dependencies..."
+python -c "import requests; print('✓ requests:', requests.__version__)" 2>/dev/null || echo "✗ requests not installed"
 
 
 # Check for .env file
@@ -49,10 +45,14 @@ if [ ! -f ".env" ]; then
     cp .env.example .env
     echo "✓ Created .env file"
     echo ""
-    echo "📋 Please edit .env with your API credentials:"
-    echo "   - ANTHROPIC_API_KEY: Get from https://console.anthropic.com"
-    echo "   - GITLAB_TOKEN: Create in GitLab Settings → Access Tokens"
-    echo "   - GITLAB_PROJECT_ID: Found in project Settings → General"
+    echo "📋 Please edit .env with your Codex API credentials:"
+    echo "   - CODEX_API_URL: Your custom Codex API endpoint"
+    echo "   - CODEX_API_KEY: API key for authentication"
+    echo "   - CODEX_MODEL: Model name at your endpoint"
+    echo "   - GITLAB_TOKEN: GitLab personal access token"
+    echo "   - GITLAB_PROJECT_ID: GitLab project ID"
+    echo ""
+    echo "   See .env.example for examples (local, government-hosted, private deployments)"
 else
     echo "✓ .env file exists"
 fi

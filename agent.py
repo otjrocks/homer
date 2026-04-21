@@ -1,6 +1,7 @@
 """
 GitLab AI Code Review Agent
-Using the Anthropic API, this agent reviews GitLab merge request diffs and provides feedback. It posts inline comments for issues and a final summary note to the MR.
+Using the Codex SDK, this agent reviews GitLab merge request diffs and provides feedback. It posts inline comments for issues and a final summary note to the MR.
+Supports custom Codex API URLs for local, private, government-hosted, and other endpoints.
 """
 
 import json
@@ -11,21 +12,19 @@ from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 
 import requests
-import anthropic
-from anthropic import Anthropic
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
 # Configuration
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL")
+CODEX_API_URL = os.getenv("CODEX_API_URL", "http://localhost:8000/v1")
+CODEX_API_KEY = os.getenv("CODEX_API_KEY")
+CODEX_MODEL = os.getenv("CODEX_MODEL", "codex-review")
 GITLAB_TOKEN = os.getenv("GITLAB_TOKEN")
 GITLAB_PROJECT_ID = os.getenv("GITLAB_PROJECT_ID")
 GITLAB_URL = os.getenv("GITLAB_URL", "https://gitlab.com")
 BASE_BRANCH = os.getenv("BASE_BRANCH", "main")
-HOMER_IMAGE_URL = os.getenv("HOMER_IMAGE_URL")
 
 
 @dataclass
@@ -41,7 +40,7 @@ class CodeComment:
 
 @dataclass
 class ReviewResponse:
-    """Structured response from Claude"""
+    """Structured response from Codex API"""
     summary: str
     overall_assessment: str  # approve | request_changes | comment
     comments: List[CodeComment]
@@ -49,13 +48,18 @@ class ReviewResponse:
 
 def validate_env_vars() -> bool:
     """Validate required environment variables"""
-    required = ["ANTHROPIC_API_KEY", "GITLAB_TOKEN", "GITLAB_PROJECT_ID"]
+    required = ["CODEX_API_KEY", "GITLAB_TOKEN", "GITLAB_PROJECT_ID"]
     missing = [var for var in required if not os.getenv(var)]
     
     if missing:
         print(f"Error: Missing environment variables: {', '.join(missing)}")
         print("Please set these in your .env file")
         return False
+    
+    # Validate Codex API URL is set
+    if not os.getenv("CODEX_API_URL"):
+        print("Warning: CODEX_API_URL not set, using default: http://localhost:8000/v1")
+    
     return True
 
 
@@ -120,10 +124,10 @@ def build_diff_text(mr_data: Dict[str, Any]) -> str:
 
 def validate_review_json(raw_response: str) -> Optional[Dict[str, Any]]:
     """
-    Validate JSON response from Claude
+    Validate JSON response from Codex API
     
     Args:
-        raw_response: Raw text response from Claude
+        raw_response: Raw text response from Codex
     
     Returns:
         Parsed JSON if valid, None otherwise
@@ -186,9 +190,9 @@ def validate_review_json(raw_response: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def call_claude_for_review(system_prompt: str, user_prompt: str, retry_count: int = 0) -> Optional[Dict[str, Any]]:
+def call_codex_for_review(system_prompt: str, user_prompt: str, retry_count: int = 0) -> Optional[Dict[str, Any]]:
     """
-    Call Claude API for code review
+    Call Codex API for code review via custom endpoint
     
     Args:
         system_prompt: System prompt with Homer persona
@@ -198,32 +202,72 @@ def call_claude_for_review(system_prompt: str, user_prompt: str, retry_count: in
     Returns:
         Parsed JSON response if valid, None otherwise
     """
-    try:
-        client = Anthropic(api_key=ANTHROPIC_API_KEY)
-    except TypeError as e:
-        print(f"Error creating Anthropic client: {e}")
-        print("This is often caused by an incompatible 'httpx' version. Please run:")
-        print("  pip install 'httpx==0.23.3'  # or pip install -r requirements.txt")
-        sys.exit(1)
+    print(f"Calling Codex for review (attempt {retry_count + 1})...")
     
-    print(f"Calling Claude for review (attempt {retry_count + 1})...")
-
+    # Prepare request headers
+    headers = {
+        "Content-Type": "application/json",
+    }
+    
+    if CODEX_API_KEY:
+        headers["Authorization"] = f"Bearer {CODEX_API_KEY}"
+    
+    # Prepare request payload (OpenAI-compatible format)
+    payload = {
+        "model": CODEX_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        "temperature": 0.2,
+        "max_completion_tokens": 4096,
+    }
+    
     try:
-        response = client.messages.create(
-            model=ANTHROPIC_MODEL,
-            temperature=0.2,
-            max_tokens=4096,
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_prompt}]
+        response = requests.post(
+            f"{CODEX_API_URL}/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=60
         )
-    except anthropic.NotFoundError as e:
-        print(f"Error: Model '{ANTHROPIC_MODEL}' not found.")
-        sys.exit(1)
-    except Exception as e:
-        print(f"Error calling Anthropic API: {e}")
+        response.raise_for_status()
+        
+        result = response.json()
+        
+        # Extract text from response (OpenAI-compatible format)
+        if "choices" in result and len(result["choices"]) > 0:
+            choice = result["choices"][0]
+            if "message" in choice and "content" in choice["message"]:
+                raw_output = choice["message"]["content"]
+            else:
+                print(f"Error: Unexpected Codex API response format: {result}")
+                return None
+        else:
+            print(f"Error: No choices in Codex API response: {result}")
+            return None
+        
+    except requests.exceptions.Timeout:
+        print(f"Error: Codex API request timed out at {CODEX_API_URL}")
         return None
-    
-    raw_output = response.content[0].text
+    except requests.exceptions.ConnectionError:
+        print(f"Error: Cannot connect to Codex API at {CODEX_API_URL}")
+        return None
+    except requests.exceptions.HTTPError as e:
+        # Include response body for debugging
+        try:
+            error_details = e.response.json()
+            print(f"Error calling Codex API: {e}")
+            print(f"API Response: {error_details}")
+        except:
+            print(f"Error calling Codex API: {e}")
+            print(f"Response body: {e.response.text}")
+        return None
+    except requests.exceptions.RequestException as e:
+        print(f"Error calling Codex API: {e}")
+        return None
+    except ValueError as e:
+        print(f"Error parsing Codex API response: {e}")
+        return None
     
     # Validate JSON
     validated = validate_review_json(raw_output)
@@ -234,8 +278,8 @@ def call_claude_for_review(system_prompt: str, user_prompt: str, retry_count: in
     # Retry once with correction prompt
     if retry_count == 0:
         print("Retrying with correction prompt...")
-        correction_prompt = user_prompt + "\n\nIMPORTANT: You must output ONLY valid JSON. No markdown, no explanations, no extra text. Start with '{' and end with '}'."
-        return call_claude_for_review(system_prompt, correction_prompt, retry_count + 1)
+        correction_prompt = user_prompt + "\n\nIMPORTANT: You must output ONLY valid JSON. No markdown, no explanations, no extra text. Start with '{' and end with '}'." 
+        return call_codex_for_review(system_prompt, correction_prompt, retry_count + 1)
     
     print("Error: Failed to get valid JSON response after retry")
     return None
@@ -339,11 +383,9 @@ def post_summary_note(merge_request_iid: int, review_data: Dict[str, Any]) -> bo
         if severity in severity_counts:
             severity_counts[severity] += 1
 
-    # Include Homer image (resized) and format summary
+    # Format summary
     summary_text = load_template(
         "summary_note.txt",
-        homer_image_url=HOMER_IMAGE_URL,
-        image_width=150,
         overall_assessment=review_data["overall_assessment"].replace("_", " ").title(),
         summary=review_data["summary"],
         high_count=severity_counts["high"],
@@ -413,14 +455,14 @@ def main():
     system_prompt = load_template("system_prompt.txt")
     user_prompt = load_template("user_prompt.txt", diff_text=diff_text)
     
-    # Call Claude
-    review_result = call_claude_for_review(system_prompt, user_prompt)
+    # Call Codex
+    review_result = call_codex_for_review(system_prompt, user_prompt)
     
     if not review_result:
-        print("Failed to get valid review from Claude")
+        print("Failed to get valid review from Codex")
         sys.exit(1)
     
-    print("\n✓ Received valid review from Claude")
+    print("\n✓ Received valid review from Codex")
     print(f"Overall Assessment: {review_result['overall_assessment']}")
     print(f"Found {len(review_result['comments'])} issue(s)")
     

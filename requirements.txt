@@ -1,6 +1,2 @@
-anthropic==0.18.0
 requests==2.31.0
 python-dotenv==1.0.0
-# Pin httpx to a version compatible with the installed anthropic client
-# (prevents: TypeError: Client.__init__() got an unexpected keyword argument 'proxies')
-httpx==0.23.3

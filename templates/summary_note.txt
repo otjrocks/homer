@@ -1,5 +1,3 @@
-<img src="{homer_image_url}" width="{image_width}" alt="Homer">
-
 **Overall Assessment:** {overall_assessment}
 
 **Summary:**
